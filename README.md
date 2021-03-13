@@ -1,2 +1,2 @@
 # vue-canvas
-init
+vanilla
