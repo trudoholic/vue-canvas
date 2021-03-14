@@ -1,2 +1,2 @@
 # vue-canvas
-vuex
+vuex-wip
