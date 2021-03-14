@@ -14,7 +14,7 @@
 	  </div>
 	</header>
 	<aside id="aside">
-		<template v-for="f in files">
+		<template v-for="f in getFiles"><!--files-->
 			<div class="thumbnail">
 				<img @click="viewFile" :src="f.src" :alt="f.name" />
 			</div>
@@ -24,40 +24,47 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
   import Vue from "vue";
+  import { mapGetters, mapActions } from "vuex";
 
   export default Vue.extend({
     data: function() {
-      return {
-        files: [],
-		mode: "modeNone",
-      }
+      return {}
     },
     watch: {
-      mode: function (newMode) {
+      getMode: function (newMode) {
 		this.drawImage();
       }
-    },	
+    },
+    computed: {
+      mode: {
+        get() { return this.getMode; },
+        set(value) { this.setMode(value); },
+      },	  
+	  ...mapGetters(["getFiles", "getMode", "getSrc"])
+    },
     methods: {
       previewFiles(event) {
         // console.log(event.target.files);
-        this.files = Array.from(event.target.files, it => ({ name: it.name, src: URL.createObjectURL(it) }));
-        this.files = this.files.filter(it => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(it.name));
-        console.log(this.files);
+        let files = Array.from(event.target.files, it => ({ name: it.name, src: URL.createObjectURL(it) }));
+        files = files.filter(it => (/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(it.name));
+        this.setFiles(files);
       },
       viewFile(event) {
         // console.log(event.target.src);
-		this.src = event.target.src;
+		this.setSrc(event.target.src);
 		this.drawImage();
       },
       drawImage() {
+	    let src = this.getSrc;
+		if (!src) return;
         const img = new Image();
         img.onload = () => {
 		  img.onload = null;
           this.ctx.fillRect(0, 0, canvas.width, canvas.height);
           let k = 1;
-		  switch (this.mode) {
+		  switch (this.getMode) {
 		    case "modeBoth":
 		      k = (img.width > img.height)? (canvas.width / img.width): (canvas.height / img.height);
 		      break;
@@ -76,7 +83,7 @@
           dy = (canvas.height > hh)? (canvas.height - hh)/2: 0;
           this.ctx.drawImage(img, 0,0,img.width,img.height, dx,dy,ww,hh);
         };
-        img.src = this.src;
+        img.src = src;
       },
       drawText() {
 	    this.ctx.fillStyle = "#369";
@@ -89,10 +96,12 @@
 	    this.ctx.fillStyle = "#369";
       },
 	  resizeCanvas() {
+	    // console.log("resizeCanvas()");
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 	    this.drawText();
 	  },
+	  ...mapActions(["setFiles", "setMode", "setSrc"])
     },
     mounted: function(){
 	  // console.log("mounted()");
